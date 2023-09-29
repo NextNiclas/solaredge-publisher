@@ -23,10 +23,12 @@ def publish_topics(client: mqtt.Client, l: list):
     for value in l:
         client.publish(topic=value[0],payload=value[1])
 
-def connectMQTT(host: str, port:int):
+def connectMQTT(host: str, port:int, user:str,password:str):
     client = mqtt.Client()
+    if user != "":
+        client.username_pw_set(username=user,password=password)
     ret = client.connect(host, port, 60)
-
+    
     if ret != 0:
         print("Could not connect to MQTT Broker")
         sys.exit(-1)
@@ -74,13 +76,15 @@ def runfn(mqclient: mqtt.Client,inverter: solaredge_modbus.Inverter):
 def main():
     MQTTHOST = os.getenv("MQTT_HOST")
     MQTTPORT = int(os.getenv("MQTT_PORT"))
+    MQTTUSER = os.getenv("MQTT_USER")
+    MQTTPASS = os.getenv("MQTT_PASS")
     INVERTER_HOST = os.getenv("INVERTER_HOST")
     INVERTER_PORT = int(os.getenv("INVERTER_PORT"))
     REFRESH_INTERVAL = int(os.getenv("REFRESH_INTERVAL"))
     INVERTER_TIMEOUT = 1
     INVERTER_UNIT = 1
     
-    mqclient = connectMQTT(MQTTHOST,MQTTPORT)
+    mqclient = connectMQTT(MQTTHOST,MQTTPORT,MQTTUSER,MQTTPASS)
     inverter = connectInverter(INVERTER_HOST,INVERTER_PORT,INVERTER_TIMEOUT,INVERTER_UNIT)
 
     while not exit.is_set():
