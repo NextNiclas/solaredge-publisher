@@ -1,0 +1,5 @@
+paho-mqtt==1.6.1
+pymodbus==3.3.2
+pyserial==3.5
+pyserial-asyncio==0.6
+solaredge-modbus==0.7.2
