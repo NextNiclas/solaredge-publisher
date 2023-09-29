@@ -67,6 +67,7 @@ def read_data(inverter: solaredge_modbus.Inverter):
 
 def runfn(mqclient: mqtt.Client,inverter: solaredge_modbus.Inverter):
     values = read_data(inverter)
+    #mqclient.publish(topic="solar/sepv",payload=json.dumps(values))
     topics = dict_to_topics("solar/sepv",values)
     publish_topics(mqclient,topics)
 
@@ -75,6 +76,7 @@ def main():
     MQTTPORT = int(os.getenv("MQTT_PORT"))
     INVERTER_HOST = os.getenv("INVERTER_HOST")
     INVERTER_PORT = int(os.getenv("INVERTER_PORT"))
+    REFRESH_INTERVAL = int(os.getenv("REFRESH_INTERVAL"))
     INVERTER_TIMEOUT = 1
     INVERTER_UNIT = 1
     
@@ -88,7 +90,7 @@ def main():
         if not inverter.connected():
             connectInverter(INVERTER_HOST,INVERTER_PORT,INVERTER_TIMEOUT,INVERTER_UNIT)
         runfn(mqclient,inverter)
-        exit.wait(10)
+        exit.wait(REFRESH_INTERVAL)
     mqclient.disconnect()
     inverter.disconnect()
 
