@@ -60,10 +60,12 @@ def scale_object(obj):
         else:
             values[key] = value
     for key,value in values.items():
-        m = re.match(r'^[a-zA-Z0-9]*_([_a-zA-Z0-9]*)$',key).group(1)
+        m = re.match(r'^[a-zA-Z0-9]*_([_a-zA-Z0-9]*)$',key)
+        if m is not None:
+            m = m.group(1)
         if key in scaling_factors:
             new_values[key] = 10**scaling_factors[key] * value
-        if m in scaling_factors:
+        if m is not None and m in scaling_factors:
             new_values[key] = 10**scaling_factors[m] * value
         if key not in new_values:
             new_values[key] = value
