@@ -6,6 +6,7 @@ import os
 import solaredge_modbus
 import sys
 import paho.mqtt.client as mqtt
+import re
 
 exit = Event()
 
@@ -49,9 +50,28 @@ def connectInverter(host,port,timeout,unit):
         sys.exit(-1)
     return inverter
 
+def scale_object(obj):
+    scaling_factors = {}
+    values = {}
+    new_values = {}
+    for key,value in obj.items():
+        if key.endswith("_scale"):
+            scaling_factors[key.replace("_scale","")] = value
+        else:
+            values[key] = value
+    for key,value in values.items():
+        m = re.match(r'^[a-zA-Z0-9]*_([_a-zA-Z0-9]*)$',key).group(1)
+        if key in scaling_factors:
+            new_values[key] = 10**scaling_factors[key] * value
+        if m in scaling_factors:
+            new_values[key] = 10**scaling_factors[m] * value
+        if key not in new_values:
+            new_values[key] = value
+    return new_values
+
 def read_data(inverter: solaredge_modbus.Inverter):
     values = {}
-    values = inverter.read_all()
+    values = scale_object(inverter.read_all())
     meters = inverter.meters()
     batteries = inverter.batteries()
     values["meters"] = {}
@@ -59,11 +79,11 @@ def read_data(inverter: solaredge_modbus.Inverter):
 
     for meter, params in meters.items():
         meter_values = params.read_all()
-        values["meters"][meter] = meter_values
+        values["meters"][meter] = scale_object(meter_values)
 
     for battery, params in batteries.items():
         battery_values = params.read_all()
-        values["batteries"][battery] = battery_values
+        values["batteries"][battery] = scale_object(battery_values)
     return values
 
 
@@ -81,7 +101,7 @@ def main():
     INVERTER_HOST = os.getenv("INVERTER_HOST")
     INVERTER_PORT = int(os.getenv("INVERTER_PORT"))
     REFRESH_INTERVAL = int(os.getenv("REFRESH_INTERVAL"))
-    INVERTER_TIMEOUT = 1
+    INVERTER_TIMEOUT = 10
     INVERTER_UNIT = 1
     
     mqclient = connectMQTT(MQTTHOST,MQTTPORT,MQTTUSER,MQTTPASS)
